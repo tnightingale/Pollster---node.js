@@ -1,12 +1,12 @@
 /********************************************************************************************
  * MODULES
  *******************************************************************************************/
-var http = require("http"),                   // HTTP module (http server and client)
-    Client = require('mysql').Client,         // MySQL module
-    sys = require("sys"),                     // SYS module
-    url = require("url"),                     // URL module
-    qs = require("querystring");              // QUERYSTRING module
-    app = require('express').createServer();
+var app = require("express").createServer(),    // Express module.
+    sys = require("sys");                       // SYS module
+    //url = require("url"),                     // URL module
+    //qs = require("querystring"),              // QUERYSTRING module
+    //http = require("http"),                   // HTTP module (http server and client)
+    //Client = require("mysql").Client,         // MySQL module
 
 var HOST = "0.0.0.0";
 var PORT = 8124;
