@@ -75,7 +75,6 @@ var active_polls = new function () {
             }
 
             data.answers = results;
-            console.log(data);
             
             while (participants.length > 0) {
               request = participants.shift();
