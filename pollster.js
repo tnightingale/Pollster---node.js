@@ -5,11 +5,21 @@ var app = require("express").createServer(),    // Express module.
     sys = require("sys"),                       // SYS module
     //url = require("url"),                     // URL module
     //qs = require("querystring"),              // QUERYSTRING module
-    http = require("http");                   // HTTP module (http server and client)
-    //Client = require("mysql").Client,         // MySQL module
+    Client = require("mysql").Client,         // MySQL module
+    http = require("http");                     // HTTP module (http server and client)
 
+
+/********************************************************************************************
+ * GOLBALS
+ *******************************************************************************************/
 var HOST = "0.0.0.0";
 var PORT = 8124;
+var DB = initDB({
+  user: "root",
+  password: "cleo31",
+  port: "/Applications/MAMP/tmp/mysql/mysql.sock",
+  database: "voting_development"
+});
 
 
 /********************************************************************************************
@@ -47,25 +57,35 @@ var active_polls = new function () {
     
     log("AP(" + active_poll.id + ") : Set Q: " + active_poll.question_id);
     
-    // Bind reactions to RESPONSE event.
-    pollster_req.on('response', function (response) {
-      // TODO: Probably should error check HTTP status code?
-      //console.log('STATUS: ' + response.statusCode);      
-      
-      // REMOVED: setEncoding('utf8')
-      
-      // Bind reactions to DATA event.
-      response.on('data', function (chunk) {
-        // Parse received data.
-        var data = JSON.parse(chunk);
-        
-        while (participants.length > 0) {
-          request = participants.shift();
-          request.callback(data);
-          log("Responding (" + request.user + "), Q = " + active_poll.question_id);
+    var data = {};
+    DB.query(
+      "SELECT body FROM questions WHERE (id = " + active_poll.question_id + ")",
+      function selectCb(err, results, fields) {
+        if (err) {
+          throw err;
         }
-      });
-    });
+        
+        data.question = results.pop().body;
+        
+        DB.query(
+          "SELECT id, body FROM answers WHERE question_id = " + active_poll.question_id,
+          function selectCb(err, results, fields) {
+            if (err) {
+              throw err;
+            }
+
+            data.answers = results;
+            console.log(data);
+            
+            while (participants.length > 0) {
+              request = participants.shift();
+              request.callback(data);
+              log("Responding (" + request.user + "), Q = " + active_poll.question_id);
+            }
+          }
+        );
+      }
+    );
   }
   
   this.query = function (user, req_active_poll, callback) {
@@ -84,4 +104,14 @@ var active_polls = new function () {
  *******************************************************************************************/
 function log(message) {
   sys.puts(new Date() + ": " + message);
+}
+
+/**
+ * Init Database Connection
+ */
+function initDB (options) {
+  dbClient = new Client(options);
+  dbClient.connect();
+  dbClient.useDatabase(options.database);
+  return dbClient;
 }
