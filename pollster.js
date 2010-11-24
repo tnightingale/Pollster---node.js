@@ -48,12 +48,13 @@ var active_polls = new function () {
   var callbacks = [];
   
   this.set_question = function (active_poll) {
-    var participants = callbacks[active_poll.id] || [];
     var data_source = '/' + active_poll.id + '.json';
+    var participants = [];
     
-    var pollster = http.createClient(3000, HOST);
-    var pollster_req = pollster.request('GET', data_source);
-    pollster_req.end();
+    if (callbacks[active_poll.id]) {
+      participants = callbacks[active_poll.id].slice();
+      callbacks[active_poll.id] = [];
+    }
     
     log("AP(" + active_poll.id + ") : Set Q: " + active_poll.question_id);
     
