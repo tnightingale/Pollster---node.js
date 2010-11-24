@@ -21,6 +21,7 @@ var DB = initDB({
   database: "voting_development"
 });
 
+var counter = 0;
 
 /********************************************************************************************
  * INITIALIZE SERVER
@@ -28,12 +29,14 @@ var DB = initDB({
 app.enable('jsonp callback');
 
 app.get('/query_active_question', function(req, res) {
+  ++counter;
   active_polls.query(req.socket.fd, req.query.active_poll, function (data) {
     res.send(data);
   });
 });
 
 app.get('/set_question', function(req, res) {
+  console.log("routing /set_question");
   active_polls.set_question(req.query);
   res.send({});
 });
@@ -48,10 +51,10 @@ var active_polls = new function () {
   var callbacks = [];
   
   this.set_question = function (active_poll) {
-    var data_source = '/' + active_poll.id + '.json';
     var participants = [];
     
     if (callbacks[active_poll.id]) {
+      //participants = callbacks[active_poll.id];
       participants = callbacks[active_poll.id].slice();
       callbacks[active_poll.id] = [];
     }
@@ -80,7 +83,8 @@ var active_polls = new function () {
             while (participants.length > 0) {
               request = participants.shift();
               request.callback(data);
-              log("Responding (" + request.user + "), Q = " + active_poll.question_id);
+              log(counter-- + ": Responding (" + request.user + "), Q = " + active_poll.question_id);
+              //log("Responding (" + request.user + "), Q = " + active_poll.question_id);
             }
           }
         );
@@ -94,7 +98,8 @@ var active_polls = new function () {
     request = { user: user, timestamp: new Date(), callback: callback };
     callbacks[req_active_poll].push(request);
     
-    log("User " + user + " request pushed.");
+    log(counter + ": User " + user + " request pushed.");
+    //log("User " + user + " request pushed.");
   };
 };
 
