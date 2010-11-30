@@ -30,6 +30,28 @@ app.enable('jsonp callback');
 
 app.get('/query_active_question', function(req, res) {
   ++counter;
+  
+  req.connection.setTimeout(0);
+  req.connection.setKeepAlive(true, 10000);
+  
+  req.connection.addListener("timeout", function () {
+    sys.puts("TIMEOUT: " + req.socket.fd);
+  });
+  
+  req.connection.addListener("end", function () {
+    sys.puts("END: " + req.socket.fd);
+  });  
+  
+  req.connection.addListener("close", function (had_error) {
+    sys.puts("CLOSE: " + req.socket.fd + ", ERROR: " + had_error);
+  });
+  
+  req.connection.addListener("error", function () {
+    sys.puts("ERROR: " + req.socket.fd);
+  });
+  
+  console.log(req.query);
+  
   active_polls.query(req.socket.fd, req.query.active_poll, function (data) {
     res.send(data);
   });
@@ -53,6 +75,7 @@ var active_polls = new function () {
   this.set_question = function (active_poll) {
     var participants = [];
     
+    console.log(callbacks);
     if (callbacks[active_poll.id]) {
       //participants = callbacks[active_poll.id];
       participants = callbacks[active_poll.id].slice();
@@ -77,6 +100,7 @@ var active_polls = new function () {
             if (err) {
               throw err;
             }
+            
 
             data.answers = results;
             
@@ -97,6 +121,8 @@ var active_polls = new function () {
     
     request = { user: user, timestamp: new Date(), callback: callback };
     callbacks[req_active_poll].push(request);
+    console.log("REQ: " + req_active_poll);
+    console.log("PUSH: " + callbacks[req_active_poll].length);
     
     log(counter + ": User " + user + " request pushed.");
     //log("User " + user + " request pushed.");
